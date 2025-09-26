@@ -48,6 +48,12 @@ export function createServer() {
   app.post("/api/contact-submissions/update", updateContact);
   app.post("/api/contact-submissions/delete", deleteContact);
 
+  // Public enquiries/applications (public site -> admin dashboard)
+  app.post("/api/public/enquiries", postPublicEnquiry);
+  app.get("/api/public/enquiries", listPublicEnquiries);
+  app.post("/api/public/applications", postPublicApplication);
+  app.get("/api/public/applications", listPublicApplications);
+
   // Role permissions persistence (read open, write requires ADMIN_API_TOKEN)
   app.get("/api/role-perms", getRolePerms);
   app.get("/api/role-perms/:roleId", getRolePerms);
