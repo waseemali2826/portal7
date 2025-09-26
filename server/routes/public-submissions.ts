@@ -23,8 +23,11 @@ export type PublicApplication = {
   createdAt: string; // ISO
 };
 
-const isServerless = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-const baseDir = isServerless ? os.tmpdir() : path.join(import.meta.dirname, "../data");
+const isServerless =
+  !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+const baseDir = isServerless
+  ? os.tmpdir()
+  : path.join(import.meta.dirname, "../data");
 const dataDir = baseDir;
 
 const enquiriesFile = path.join(dataDir, "public-enquiries.json");
@@ -58,7 +61,8 @@ async function writeAll<T>(file: string, items: T[]) {
 export const postPublicEnquiry: RequestHandler = async (req, res) => {
   try {
     const { name, course, contact, email, preferredStart } = req.body || {};
-    if (!name || !course || !contact) return res.status(400).json({ error: "Invalid payload" });
+    if (!name || !course || !contact)
+      return res.status(400).json({ error: "Invalid payload" });
     const items = await readAll<PublicEnquiry>(enquiriesFile);
     const it: PublicEnquiry = {
       id: `ENQ-${Date.now()}`,
@@ -89,7 +93,8 @@ export const listPublicEnquiries: RequestHandler = async (_req, res) => {
 export const postPublicApplication: RequestHandler = async (req, res) => {
   try {
     const { name, email, phone, course, preferredStart } = req.body || {};
-    if (!name || !email || !phone || !course) return res.status(400).json({ error: "Invalid payload" });
+    if (!name || !email || !phone || !course)
+      return res.status(400).json({ error: "Invalid payload" });
     const items = await readAll<PublicApplication>(applicationsFile);
     const it: PublicApplication = {
       id: `APP-${Date.now()}`,

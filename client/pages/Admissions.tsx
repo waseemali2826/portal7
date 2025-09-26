@@ -31,7 +31,9 @@ export default function Admissions() {
           campus: "Main",
           fee: { total: 0, installments: [] },
           documents: [],
-          notes: p.preferredStart ? `Preferred start: ${p.preferredStart}` : undefined,
+          notes: p.preferredStart
+            ? `Preferred start: ${p.preferredStart}`
+            : undefined,
         }));
         setItems((prev) => {
           const byId = new Map(prev.map((x) => [x.id, x] as const));
@@ -48,7 +50,9 @@ export default function Admissions() {
     };
     window.addEventListener("storage", onStorage);
 
-    const iv = setInterval(() => { void mergeFromPublic(); }, 2000);
+    const iv = setInterval(() => {
+      void mergeFromPublic();
+    }, 2000);
     return () => {
       window.removeEventListener("storage", onStorage);
       clearInterval(iv);
@@ -63,7 +67,9 @@ export default function Admissions() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Admissions</h1>
-        <p className="text-sm text-muted-foreground">Review, approve, transfer, and report on admissions.</p>
+        <p className="text-sm text-muted-foreground">
+          Review, approve, transfer, and report on admissions.
+        </p>
       </div>
       <Tabs defaultValue="applications">
         <TabsList>
