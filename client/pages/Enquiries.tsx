@@ -50,6 +50,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { getPublicEnquiries } from "@/lib/publicStore";
+import { listEnquiries } from "@/lib/publicApi";
 import { getAllCourseNames } from "@/lib/courseStore";
 
 const COUNTRIES = ["Pakistan", "India", "UAE"] as const;
@@ -149,25 +150,34 @@ export default function Enquiries() {
     "All" | (typeof STAGES)[number]
   >("All");
 
+  const [serverPub, setServerPub] = useState<any[]>([]);
+  useEffect(() => {
+    (async () => {
+      try {
+        const items = await listEnquiries();
+        setServerPub(items);
+      } catch {}
+    })();
+  }, []);
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    const pub = getPublicEnquiries();
+    const local = getPublicEnquiries();
+    const norm = (p: any): Enquiry => ({
+      id: p.id,
+      name: p.name,
+      course: p.course,
+      contact: p.contact,
+      email: p.email,
+      city: "Lahore",
+      source: "Website",
+      nextFollow: p.preferredStart,
+      stage: "Prospective",
+      status: "Pending",
+    });
     const merged: Enquiry[] = [
-      ...pub.map(
-        (p) =>
-          ({
-            id: p.id,
-            name: p.name,
-            course: p.course,
-            contact: p.contact,
-            email: p.email,
-            city: "Lahore",
-            source: "Website",
-            nextFollow: p.preferredStart,
-            stage: "Prospective",
-            status: "Pending",
-          }) as Enquiry,
-      ),
+      ...serverPub.map(norm),
+      ...local.map(norm),
       ...BASE_ENQUIRIES,
     ];
     return merged.filter(
@@ -177,7 +187,7 @@ export default function Enquiries() {
           e.id.toLowerCase().includes(q) ||
           e.course.toLowerCase().includes(q)),
     );
-  }, [search, stageFilter]);
+  }, [search, stageFilter, serverPub]);
 
   const todays = filtered.filter(
     (e) => e.nextFollow?.slice(0, 10) === new Date().toISOString().slice(0, 10),
@@ -213,7 +223,7 @@ export default function Enquiries() {
             </DropdownMenuContent>
           </DropdownMenu>
           <Input
-            placeholder="Search enquiries or ID…"
+            placeholder="Search enquiries or ID���"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-9 w-56"

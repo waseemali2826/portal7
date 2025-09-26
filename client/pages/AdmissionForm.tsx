@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { COURSES } from "@/data/courses";
 import { addPublicApplication, addPublicEnquiry } from "@/lib/publicStore";
+import { createApplication, createEnquiry } from "@/lib/publicApi";
 import { getStoredCourses } from "@/lib/courseStore";
 import { addStudent } from "@/lib/studentStore";
 
@@ -79,20 +80,41 @@ export default function AdmissionForm() {
     setSubmitting(true);
     await new Promise((r) => setTimeout(r, 300));
 
-    addPublicEnquiry({
-      name: fullName,
-      course,
-      contact: phone,
-      email,
-      preferredStart: startDate,
-    });
-    addPublicApplication({
-      name: fullName,
-      email,
-      phone,
-      course,
-      preferredStart: startDate,
-    });
+    try {
+      await Promise.all([
+        createEnquiry({
+          name: fullName,
+          course,
+          contact: phone,
+          email,
+          preferredStart: startDate,
+        }),
+        createApplication({
+          name: fullName,
+          email,
+          phone,
+          course,
+          preferredStart: startDate,
+        }),
+      ]);
+    } catch {
+      // Fallback to local storage if server not reachable
+      addPublicEnquiry({
+        name: fullName,
+        course,
+        contact: phone,
+        email,
+        preferredStart: startDate,
+      });
+      addPublicApplication({
+        name: fullName,
+        email,
+        phone,
+        course,
+        preferredStart: startDate,
+      });
+    }
+
     addStudent({
       name: fullName,
       email,

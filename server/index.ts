@@ -4,7 +4,19 @@ import cors from "cors";
 import admin from "firebase-admin";
 import { handleDemo } from "./routes/demo";
 import { getRolePerms, saveRolePerms } from "./routes/role-perms";
-import { submitContact, listContacts, listContactsCsv, updateContact, deleteContact } from "./routes/contact";
+import {
+  submitContact,
+  listContacts,
+  listContactsCsv,
+  updateContact,
+  deleteContact,
+} from "./routes/contact";
+import {
+  postPublicEnquiry,
+  listPublicEnquiries,
+  postPublicApplication,
+  listPublicApplications,
+} from "./routes/public-submissions";
 
 export function createServer() {
   const app = express();
@@ -46,6 +58,12 @@ export function createServer() {
   app.get("/api/contact-submissions.csv", listContactsCsv);
   app.post("/api/contact-submissions/update", updateContact);
   app.post("/api/contact-submissions/delete", deleteContact);
+
+  // Public enquiries/applications (public site -> admin dashboard)
+  app.post("/api/public/enquiries", postPublicEnquiry);
+  app.get("/api/public/enquiries", listPublicEnquiries);
+  app.post("/api/public/applications", postPublicApplication);
+  app.get("/api/public/applications", listPublicApplications);
 
   // Role permissions persistence (read open, write requires ADMIN_API_TOKEN)
   app.get("/api/role-perms", getRolePerms);

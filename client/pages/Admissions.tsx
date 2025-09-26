@@ -5,15 +5,23 @@ import { mockAdmissions } from "./admissions/data";
 import { ApplicationsTab } from "./admissions/Applications";
 import { ReportsTab } from "./admissions/Reports";
 import { getPublicApplications } from "@/lib/publicStore";
+import { listApplications } from "@/lib/publicApi";
 
 export default function Admissions() {
   const [items, setItems] = useState<AdmissionRecord[]>(mockAdmissions);
 
   useEffect(() => {
-    const mergeFromPublic = () => {
-      const pub = getPublicApplications();
-      if (pub.length) {
-        const mapped: AdmissionRecord[] = pub.map((p) => ({
+    const mergeFromPublic = async () => {
+      const [local, server] = await Promise.allSettled([
+        Promise.resolve(getPublicApplications()),
+        listApplications(),
+      ]);
+      const all = [
+        ...(server.status === "fulfilled" ? server.value : []),
+        ...(local.status === "fulfilled" ? local.value : []),
+      ];
+      if (all.length) {
+        const mapped: AdmissionRecord[] = all.map((p: any) => ({
           id: p.id,
           createdAt: p.createdAt,
           status: "Pending",
@@ -23,7 +31,9 @@ export default function Admissions() {
           campus: "Main",
           fee: { total: 0, installments: [] },
           documents: [],
-          notes: p.preferredStart ? `Preferred start: ${p.preferredStart}` : undefined,
+          notes: p.preferredStart
+            ? `Preferred start: ${p.preferredStart}`
+            : undefined,
         }));
         setItems((prev) => {
           const byId = new Map(prev.map((x) => [x.id, x] as const));
@@ -40,7 +50,9 @@ export default function Admissions() {
     };
     window.addEventListener("storage", onStorage);
 
-    const iv = setInterval(mergeFromPublic, 2000);
+    const iv = setInterval(() => {
+      void mergeFromPublic();
+    }, 2000);
     return () => {
       window.removeEventListener("storage", onStorage);
       clearInterval(iv);
@@ -55,7 +67,9 @@ export default function Admissions() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Admissions</h1>
-        <p className="text-sm text-muted-foreground">Review, approve, transfer, and report on admissions.</p>
+        <p className="text-sm text-muted-foreground">
+          Review, approve, transfer, and report on admissions.
+        </p>
       </div>
       <Tabs defaultValue="applications">
         <TabsList>

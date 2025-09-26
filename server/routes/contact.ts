@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import { promises as fs } from "fs";
 import path from "path";
+import os from "os";
 
 export type ContactSubmission = {
   id: string;
@@ -11,7 +12,12 @@ export type ContactSubmission = {
   ip?: string | null;
 };
 
-const dataDir = path.join(import.meta.dirname, "../data");
+const isServerless =
+  !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+const baseDir = isServerless
+  ? os.tmpdir()
+  : path.join(import.meta.dirname, "../data");
+const dataDir = path.join(baseDir);
 const dataFile = path.join(dataDir, "contact-submissions.json");
 
 async function ensureStore() {
@@ -43,9 +49,12 @@ export const submitContact: RequestHandler = async (req, res) => {
   try {
     const { name, email, message } = req.body || {};
     if (
-      !name || typeof name !== "string" ||
-      !email || typeof email !== "string" ||
-      !message || typeof message !== "string"
+      !name ||
+      typeof name !== "string" ||
+      !email ||
+      typeof email !== "string" ||
+      !message ||
+      typeof message !== "string"
     ) {
       return res.status(400).json({ error: "Invalid payload" });
     }
@@ -56,7 +65,10 @@ export const submitContact: RequestHandler = async (req, res) => {
       email: email.trim().toLowerCase(),
       message: message.trim(),
       createdAt: new Date().toISOString(),
-      ip: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress || null,
+      ip:
+        (req.headers["x-forwarded-for"] as string) ||
+        req.socket.remoteAddress ||
+        null,
     };
     items.push(sub);
     await writeAll(items);
@@ -79,7 +91,9 @@ export const listContacts: RequestHandler = async (_req, res) => {
 export const listContactsCsv: RequestHandler = async (_req, res) => {
   try {
     const items = await readAll();
-    const header = ["id","name","email","message","createdAt","ip"].join(",");
+    const header = ["id", "name", "email", "message", "createdAt", "ip"].join(
+      ",",
+    );
     const rows = items.map((it) =>
       [
         it.id,
@@ -92,7 +106,10 @@ export const listContactsCsv: RequestHandler = async (_req, res) => {
     );
     const csv = [header, ...rows].join("\n");
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", "attachment; filename=contact-submissions.csv");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=contact-submissions.csv",
+    );
     res.send(csv);
   } catch (e: any) {
     res.status(500).json({ error: e?.message ?? "Server error" });
@@ -109,7 +126,8 @@ export const updateContact: RequestHandler = async (req, res) => {
     const idx = items.findIndex((x) => x.id === id);
     if (idx === -1) return res.status(404).json({ error: "Not found" });
     if (typeof name === "string") items[idx].name = name.trim();
-    if (typeof email === "string") items[idx].email = email.trim().toLowerCase();
+    if (typeof email === "string")
+      items[idx].email = email.trim().toLowerCase();
     if (typeof message === "string") items[idx].message = message.trim();
     await writeAll(items);
     res.json({ ok: true, item: items[idx] });
