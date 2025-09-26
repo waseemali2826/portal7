@@ -5,6 +5,7 @@ import admin from "firebase-admin";
 import { handleDemo } from "./routes/demo";
 import { getRolePerms, saveRolePerms } from "./routes/role-perms";
 import { submitContact, listContacts, listContactsCsv, updateContact, deleteContact } from "./routes/contact";
+import { postPublicEnquiry, listPublicEnquiries, postPublicApplication, listPublicApplications } from "./routes/public-submissions";
 
 export function createServer() {
   const app = express();
