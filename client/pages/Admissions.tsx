@@ -5,15 +5,23 @@ import { mockAdmissions } from "./admissions/data";
 import { ApplicationsTab } from "./admissions/Applications";
 import { ReportsTab } from "./admissions/Reports";
 import { getPublicApplications } from "@/lib/publicStore";
+import { listApplications } from "@/lib/publicApi";
 
 export default function Admissions() {
   const [items, setItems] = useState<AdmissionRecord[]>(mockAdmissions);
 
   useEffect(() => {
-    const mergeFromPublic = () => {
-      const pub = getPublicApplications();
-      if (pub.length) {
-        const mapped: AdmissionRecord[] = pub.map((p) => ({
+    const mergeFromPublic = async () => {
+      const [local, server] = await Promise.allSettled([
+        Promise.resolve(getPublicApplications()),
+        listApplications(),
+      ]);
+      const all = [
+        ...(server.status === "fulfilled" ? server.value : []),
+        ...(local.status === "fulfilled" ? local.value : []),
+      ];
+      if (all.length) {
+        const mapped: AdmissionRecord[] = all.map((p: any) => ({
           id: p.id,
           createdAt: p.createdAt,
           status: "Pending",
@@ -40,7 +48,7 @@ export default function Admissions() {
     };
     window.addEventListener("storage", onStorage);
 
-    const iv = setInterval(mergeFromPublic, 2000);
+    const iv = setInterval(() => { void mergeFromPublic(); }, 2000);
     return () => {
       window.removeEventListener("storage", onStorage);
       clearInterval(iv);
