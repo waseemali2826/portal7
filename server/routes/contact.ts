@@ -1,6 +1,7 @@
 import { RequestHandler } from "express";
 import { promises as fs } from "fs";
 import path from "path";
+import os from "os";
 
 export type ContactSubmission = {
   id: string;
@@ -11,7 +12,9 @@ export type ContactSubmission = {
   ip?: string | null;
 };
 
-const dataDir = path.join(import.meta.dirname, "../data");
+const isServerless = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+const baseDir = isServerless ? os.tmpdir() : path.join(import.meta.dirname, "../data");
+const dataDir = path.join(baseDir);
 const dataFile = path.join(dataDir, "contact-submissions.json");
 
 async function ensureStore() {
